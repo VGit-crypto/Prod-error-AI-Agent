@@ -1,0 +1,30 @@
+{
+  "name": "business-uat-agent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "zod": "^4.6.5"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:web": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:chromium": "playwright test --project=chromium",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "ai:connection": "tsx packages/ai/tests/connection.ts",
+    "ai:orchestrate": "tsx packages/ai/tests/orchestration.ts"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+
+    "baseUrl": ".",
+
+    "paths": {
+      
+      "@pages/*": [
+        "packages/playwright/pages/*"
+      ],
+      "@fixtures/*": [
+        "packages/playwright/fixtures/*"
+      ],
+      "@data/*": [
+        "packages/playwright/test-data/*"
+      ],
+      "@utils/*": [
+        "packages/playwright/utils/*"
+      ],
+      "@ai/*": [
+        "packages/ai/*"
+      ],
+      "@domain/*": [
+        "packages/domain/*"
+      ],
+      "@schemas/*": [
+        "packages/schemas/*"
+      ],
+      "@shared/*": [
+        "packages/shared/*"
+      ]
+    }
+  },
+
+  "include": [
+    "packages/**/*.ts",
+    "apps/**/*.ts",
+    "playwright.config.ts"
+  ],
+
+  "exclude": [
+    "node_modules",
+    "playwright-report",
+    "test-results"
+  ]
+}
