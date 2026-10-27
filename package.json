@@ -25,6 +25,8 @@
     "report": "playwright show-report",
     "typecheck": "tsc --noEmit",
     "ai:connection": "tsx packages/ai/tests/connection.ts",
-    "ai:orchestrate": "tsx packages/ai/tests/orchestration.ts"
+    "ai:orchestrate": "tsx packages/ai/tests/orchestration.ts",
+    "dynatrace:analyze": "tsx packages/dynatrace/scripts/analyze-dynatrace-log.ts",
+    "dynatrace:selftest": "tsx packages/dynatrace/scripts/selftest-dynatrace-log.ts"
   }
 }
