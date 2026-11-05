@@ -1,9 +1,10 @@
 import path from 'node:path';
 import fs from 'node:fs';
 
-import { parseDynatraceLogFile } from '../src/dynatrace-log-parser';
-import { loadDynatraceKnowledgeBase } from '../src/dynatrace-kb';
-import { analyzeDynatraceLogEvents } from '../src/dynatrace-log-analyzer';
+import { parseDynatraceLogFile } from '../src/app-log-parser';
+import { parseDynatraceJsonLogFile } from '../src/app-json-log-parser';
+import { loadDynatraceKnowledgeBase } from '../src/error-logs-kb';
+import { analyzeDynatraceLogEvents } from '../src/app-log-analyzer';
 
 function readArg(name: string, fallback?: string): string | undefined {
   const idx = process.argv.indexOf(name);
@@ -16,18 +17,20 @@ async function main(): Promise<void> {
 
   const logPath = readArg(
     '--log',
-    path.join(repoRoot, 'packages', 'dynatrace', 'logs', 'sample-dynatrace-app.log'),
+    path.join(repoRoot, 'packages', 'dynatrace', 'logs', 'sample-app-logs.json'),
   );
   const kbPath = readArg(
     '--kb',
-    path.join(repoRoot, 'packages', 'dynatrace', 'kb', 'dynatrace-failure-categories.json'),
+    path.join(repoRoot, 'packages', 'dynatrace', 'kb', 'logs-failure-categories.json'),
   );
   const outPath = readArg('--out');
 
   if (!logPath) throw new Error('Missing --log <path>');
   if (!kbPath) throw new Error('Missing --kb <path>');
 
-  const events = parseDynatraceLogFile(logPath);
+  const events = logPath.toLowerCase().endsWith('.json')
+    ? parseDynatraceJsonLogFile(logPath)
+    : parseDynatraceLogFile(logPath);
   const kb = loadDynatraceKnowledgeBase(kbPath);
   const report = analyzeDynatraceLogEvents(events, kb, { logPath, kbPath });
 

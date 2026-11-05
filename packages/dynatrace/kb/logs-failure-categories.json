@@ -1,7 +1,7 @@
 {
   "name": "dynatrace-failure-categories",
   "version": "1.0.0",
-  "description": "Rule-based knowledge base for mapping Dynatrace-ingested application log errors to failure categories and suggested UAT test themes.",
+  "description": "Rule-based knowledge base for mapping Dynatrace-ingested application log errors to failure categories and suggested UAT test themes. Extended with Etihad airline domain patterns.",
   "categories": [
     {
       "id": "DOWNSTREAM_TIMEOUT",
@@ -14,12 +14,7 @@
           "\\btimeout\\b.*downstream",
           "\\bDownstream timeout\\b"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Verify user-facing error messaging when a dependency times out.",
-        "Verify idempotency for order creation when upstream retries after timeouts.",
-        "Verify graceful degradation when a dependency is slow/unavailable."
-      ]
+      }
     },
     {
       "id": "HTTP_4XX_DOWNSTREAM",
@@ -31,11 +26,7 @@
           "\\b400\\b.*Bad Request",
           "\\b422\\b"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Verify behavior when a referenced entity does not exist in a downstream service.",
-        "Verify validation prevents requests that would trigger downstream 4xx."
-      ]
+      }
     },
     {
       "id": "HTTP_429_RATE_LIMIT",
@@ -46,11 +37,7 @@
           "\\b429\\b.*Too Many Requests",
           "rate limit"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Verify client retries/backoff when rate limited.",
-        "Verify UI shows a friendly message and does not lose user state."
-      ]
+      }
     },
     {
       "id": "DB_SCHEMA_OR_QUERY",
@@ -64,11 +51,7 @@
           "ORA-",
           "SQLSTATE"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Verify application returns a stable error response when DB objects are missing/misconfigured.",
-        "Verify health checks detect schema/migration issues early."
-      ]
+      }
     },
     {
       "id": "AUTHN_AUTHZ",
@@ -83,11 +66,7 @@
           "AccessDenied",
           "invalid token"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Verify expired/invalid tokens are handled with 401 and a consistent error payload.",
-        "Verify authorization rules (role-based access) are enforced."
-      ]
+      }
     },
     {
       "id": "INPUT_VALIDATION",
@@ -96,15 +75,14 @@
       "match": {
         "anyRegex": [
           "Validation error",
+          "\\bpassportNumber\\b",
+          "\\bPNR\\b",
+          "\\bitinerary\\b",
           "must be a future date",
           "ConstraintViolation",
           "MethodArgumentNotValidException"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Add negative/boundary tests for invalid dates, missing required fields, and format errors.",
-        "Verify validation messages are clear and field-specific."
-      ]
+      }
     },
     {
       "id": "TLS_CERT",
@@ -117,11 +95,7 @@
           "certificate",
           "unable to find valid certification path"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Verify environment configuration uses correct truststore/cert chain.",
-        "Verify calls fail fast with clear operational alerts when TLS handshake fails."
-      ]
+      }
     },
     {
       "id": "NULL_POINTER_OR_BUG",
@@ -134,11 +108,7 @@
           "TypeError",
           "ReferenceError"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Add regression tests that reproduce the failing workflow from the trace/correlation ID.",
-        "Verify error handling returns a stable 500 response without leaking internals."
-      ]
+      }
     },
     {
       "id": "RESOURCE_EXHAUSTION",
@@ -151,11 +121,7 @@
           "GC overhead limit exceeded",
           "thread starvation"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Add load/stress tests for memory growth and ensure graceful failure modes.",
-        "Verify monitoring/alerts trigger on memory pressure before failure."
-      ]
+      }
     },
     {
       "id": "CONFIG_SECRETS",
@@ -169,11 +135,7 @@
           "secret",
           "configuration"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Verify non-functional configuration errors are detectable via smoke tests/health endpoints.",
-        "Verify operational runbooks for secret rotation and environment drift."
-      ]
+      }
     },
     {
       "id": "GENERIC_5XX",
@@ -185,11 +147,7 @@
           "\\b502\\b",
           "\\b503\\b"
         ]
-      },
-      "suggestedTestIdeas": [
-        "Verify consistent error contract for server errors.",
-        "Verify correlation IDs are present and surfaced for support."
-      ]
+      }
     }
   ]
 }

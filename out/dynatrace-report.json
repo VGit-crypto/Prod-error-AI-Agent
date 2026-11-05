@@ -1,0 +1,240 @@
+{
+  "source": {
+    "logPath": "packages\\dynatrace\\logs\\sample-dynatrace-app.json",
+    "kbPath": "packages\\dynatrace\\kb\\dynatrace-failure-categories.json"
+  },
+  "totals": {
+    "events": 13,
+    "errorEvents": 11,
+    "categorized": 11,
+    "uncategorized": 0
+  },
+  "failures": [
+    {
+      "categoryId": "DOWNSTREAM_TIMEOUT",
+      "categoryTitle": "Downstream timeout / gateway timeout",
+      "severity": "high",
+      "matchedRegex": "\\b504\\b.*Gateway Timeout",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:12:01.012Z\",\"level\":\"ERROR\",\"service\":\"etihad-booking-service\",\"traceId\":\"4f9d2a8b3d1a42e6\",\"spanId\":\"9aa21430\",\"logger\":\"com.etihad.booking.clients.PaymentClient\",\"message\":\"HTTP 504 Gateway Timeout calling payment-service url=https://pay.svc/payments\",\"attributes\":{\"downstreamService\":\"payment-service\",\"httpStatus\":504,\"url\":\"https://pay.svc/payments\",\"flow\":\"BOOKING_CREATE\"}}",
+        "timestamp": "2026-10-15T09:12:01.012Z",
+        "level": "ERROR",
+        "service": "etihad-booking-service",
+        "traceId": "4f9d2a8b3d1a42e6",
+        "spanId": "9aa21430",
+        "logger": "com.etihad.booking.clients.PaymentClient",
+        "message": "HTTP 504 Gateway Timeout calling payment-service url=https://pay.svc/payments"
+      },
+      "suggestedTestIdeas": [
+        "Verify user-facing error messaging when a dependency times out.",
+        "Verify idempotency for order creation when upstream retries after timeouts.",
+        "Verify graceful degradation when a dependency is slow/unavailable."
+      ]
+    },
+    {
+      "categoryId": "DOWNSTREAM_TIMEOUT",
+      "categoryTitle": "Downstream timeout / gateway timeout",
+      "severity": "high",
+      "matchedRegex": "\\bDownstream timeout\\b",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:12:01.013Z\",\"level\":\"ERROR\",\"service\":\"etihad-booking-service\",\"traceId\":\"4f9d2a8b3d1a42e6\",\"spanId\":\"9aa21430\",\"logger\":\"com.etihad.booking.api.BookingController\",\"message\":\"Failed to create booking. status=502 cause=Downstream timeout\",\"attributes\":{\"httpStatus\":502,\"flow\":\"BOOKING_CREATE\"}}",
+        "timestamp": "2026-10-15T09:12:01.013Z",
+        "level": "ERROR",
+        "service": "etihad-booking-service",
+        "traceId": "4f9d2a8b3d1a42e6",
+        "spanId": "9aa21430",
+        "logger": "com.etihad.booking.api.BookingController",
+        "message": "Failed to create booking. status=502 cause=Downstream timeout"
+      },
+      "suggestedTestIdeas": [
+        "Verify user-facing error messaging when a dependency times out.",
+        "Verify idempotency for order creation when upstream retries after timeouts.",
+        "Verify graceful degradation when a dependency is slow/unavailable."
+      ]
+    },
+    {
+      "categoryId": "DB_SCHEMA_OR_QUERY",
+      "categoryTitle": "Database schema/query failure",
+      "severity": "high",
+      "matchedRegex": "PSQLException",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:13:10.930Z\",\"level\":\"ERROR\",\"service\":\"etihad-booking-service\",\"traceId\":\"6c2c8c1f8c0a4a1b\",\"spanId\":\"2f1a6e7b\",\"logger\":\"com.etihad.booking.persistence.BookingRepository\",\"message\":\"SQL error executing query\",\"stackTrace\":\"org.postgresql.util.PSQLException: ERROR: relation \\\"bookings\\\" does not exist\\n\\tat org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2676)\\n\\tat org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2366)\",\"attributes\":{\"db\":\"postgres\",\"table\":\"bookings\",\"flow\":\"BOOKING_VIEW\"}}",
+        "timestamp": "2026-10-15T09:13:10.930Z",
+        "level": "ERROR",
+        "service": "etihad-booking-service",
+        "traceId": "6c2c8c1f8c0a4a1b",
+        "spanId": "2f1a6e7b",
+        "logger": "com.etihad.booking.persistence.BookingRepository",
+        "message": "SQL error executing query",
+        "stackTrace": "org.postgresql.util.PSQLException: ERROR: relation \"bookings\" does not exist\n\tat org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2676)\n\tat org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2366)"
+      },
+      "suggestedTestIdeas": [
+        "Verify application returns a stable error response when DB objects are missing/misconfigured.",
+        "Verify health checks detect schema/migration issues early."
+      ]
+    },
+    {
+      "categoryId": "AUTHN_AUTHZ",
+      "categoryTitle": "Authentication/authorization failure",
+      "severity": "high",
+      "matchedRegex": "JWT validation failed",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:14:22.022Z\",\"level\":\"ERROR\",\"service\":\"etihad-identity-gateway\",\"traceId\":\"9a9b2c4d1f2e4a7c\",\"spanId\":\"18d2c300\",\"logger\":\"com.etihad.identity.JwtFilter\",\"message\":\"JWT validation failed: SignatureException: JWT signature does not match locally computed signature\",\"attributes\":{\"flow\":\"LOGIN\",\"tokenType\":\"access\"}}",
+        "timestamp": "2026-10-15T09:14:22.022Z",
+        "level": "ERROR",
+        "service": "etihad-identity-gateway",
+        "traceId": "9a9b2c4d1f2e4a7c",
+        "spanId": "18d2c300",
+        "logger": "com.etihad.identity.JwtFilter",
+        "message": "JWT validation failed: SignatureException: JWT signature does not match locally computed signature"
+      },
+      "suggestedTestIdeas": [
+        "Verify expired/invalid tokens are handled with 401 and a consistent error payload.",
+        "Verify authorization rules (role-based access) are enforced."
+      ]
+    },
+    {
+      "categoryId": "INPUT_VALIDATION",
+      "categoryTitle": "Input validation / business rule violation",
+      "severity": "low",
+      "matchedRegex": "Validation error",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:15:01.010Z\",\"level\":\"ERROR\",\"service\":\"etihad-checkin-service\",\"traceId\":\"0b5c1a9d4f234cfe\",\"spanId\":\"aa31c222\",\"logger\":\"com.etihad.checkin.api.CheckinController\",\"message\":\"Validation error: field=passportNumber message=must match pattern\",\"attributes\":{\"flow\":\"CHECKIN\",\"field\":\"passportNumber\"}}",
+        "timestamp": "2026-10-15T09:15:01.010Z",
+        "level": "ERROR",
+        "service": "etihad-checkin-service",
+        "traceId": "0b5c1a9d4f234cfe",
+        "spanId": "aa31c222",
+        "logger": "com.etihad.checkin.api.CheckinController",
+        "message": "Validation error: field=passportNumber message=must match pattern"
+      },
+      "suggestedTestIdeas": [
+        "Add negative/boundary tests for invalid dates, missing required fields, and format errors.",
+        "Verify validation messages are clear and field-specific."
+      ]
+    },
+    {
+      "categoryId": "HTTP_4XX_DOWNSTREAM",
+      "categoryTitle": "Downstream 4xx (not found / bad request)",
+      "severity": "medium",
+      "matchedRegex": "\\b404\\b.*Not Found",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:16:44.100Z\",\"level\":\"ERROR\",\"service\":\"etihad-booking-service\",\"traceId\":\"ff0a8df0f4a649b6\",\"spanId\":\"0d2d11aa\",\"logger\":\"com.etihad.booking.clients.FlightAvailabilityClient\",\"message\":\"HTTP 404 Not Found calling availability-service url=https://avail.svc/api/flights/AUH/LHR/2026-12-01\",\"attributes\":{\"downstreamService\":\"availability-service\",\"httpStatus\":404,\"flow\":\"BOOKING_CREATE\"}}",
+        "timestamp": "2026-10-15T09:16:44.100Z",
+        "level": "ERROR",
+        "service": "etihad-booking-service",
+        "traceId": "ff0a8df0f4a649b6",
+        "spanId": "0d2d11aa",
+        "logger": "com.etihad.booking.clients.FlightAvailabilityClient",
+        "message": "HTTP 404 Not Found calling availability-service url=https://avail.svc/api/flights/AUH/LHR/2026-12-01"
+      },
+      "suggestedTestIdeas": [
+        "Verify behavior when a referenced entity does not exist in a downstream service.",
+        "Verify validation prevents requests that would trigger downstream 4xx."
+      ]
+    },
+    {
+      "categoryId": "TLS_CERT",
+      "categoryTitle": "TLS/Certificate/Handshake failure",
+      "severity": "high",
+      "matchedRegex": "SSLHandshakeException",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:17:59.666Z\",\"level\":\"ERROR\",\"service\":\"etihad-loyalty-service\",\"traceId\":\"1d0c86e7d8b145d0\",\"spanId\":\"45a18fbd\",\"logger\":\"com.etihad.loyalty.clients.PartnerClient\",\"message\":\"SSLHandshakeException: PKIX path building failed: unable to find valid certification path to requested target\",\"attributes\":{\"downstreamService\":\"partner-api\",\"flow\":\"LOYALTY_ENROLL\"}}",
+        "timestamp": "2026-10-15T09:17:59.666Z",
+        "level": "ERROR",
+        "service": "etihad-loyalty-service",
+        "traceId": "1d0c86e7d8b145d0",
+        "spanId": "45a18fbd",
+        "logger": "com.etihad.loyalty.clients.PartnerClient",
+        "message": "SSLHandshakeException: PKIX path building failed: unable to find valid certification path to requested target"
+      },
+      "suggestedTestIdeas": [
+        "Verify environment configuration uses correct truststore/cert chain.",
+        "Verify calls fail fast with clear operational alerts when TLS handshake fails."
+      ]
+    },
+    {
+      "categoryId": "NULL_POINTER_OR_BUG",
+      "categoryTitle": "Unhandled exception / application bug",
+      "severity": "high",
+      "matchedRegex": "NullPointerException",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:18:33.008Z\",\"level\":\"ERROR\",\"service\":\"etihad-booking-service\",\"traceId\":\"2a1d8b3c4e5f4a6b\",\"spanId\":\"cc1d2211\",\"logger\":\"com.etihad.booking.domain.FareCalculator\",\"message\":\"NullPointerException while computing totals\",\"stackTrace\":\"java.lang.NullPointerException: Cannot invoke \\\"java.math.BigDecimal.add(java.math.BigDecimal)\\\" because \\\"discount\\\" is null\\n\\tat com.etihad.booking.domain.FareCalculator.computeTotals(FareCalculator.java:118)\",\"attributes\":{\"flow\":\"BOOKING_PRICE\",\"pnr\":\"ABC123\"}}",
+        "timestamp": "2026-10-15T09:18:33.008Z",
+        "level": "ERROR",
+        "service": "etihad-booking-service",
+        "traceId": "2a1d8b3c4e5f4a6b",
+        "spanId": "cc1d2211",
+        "logger": "com.etihad.booking.domain.FareCalculator",
+        "message": "NullPointerException while computing totals",
+        "stackTrace": "java.lang.NullPointerException: Cannot invoke \"java.math.BigDecimal.add(java.math.BigDecimal)\" because \"discount\" is null\n\tat com.etihad.booking.domain.FareCalculator.computeTotals(FareCalculator.java:118)"
+      },
+      "suggestedTestIdeas": [
+        "Add regression tests that reproduce the failing workflow from the trace/correlation ID.",
+        "Verify error handling returns a stable 500 response without leaking internals."
+      ]
+    },
+    {
+      "categoryId": "NULL_POINTER_OR_BUG",
+      "categoryTitle": "Unhandled exception / application bug",
+      "severity": "high",
+      "matchedRegex": "Unhandled exception",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:20:12.123Z\",\"level\":\"ERROR\",\"service\":\"etihad-booking-service\",\"traceId\":\"8b7c6d5e4f3a2b1c\",\"spanId\":\"123abc45\",\"logger\":\"com.etihad.booking.api.BookingController\",\"message\":\"Unhandled exception\",\"stackTrace\":\"java.lang.OutOfMemoryError: Java heap space\\n\\tat java.base/java.util.Arrays.copyOf(Arrays.java:3745)\\n\\tat java.base/java.util.ArrayList.grow(ArrayList.java:237)\",\"attributes\":{\"flow\":\"BOOKING_CREATE\"}}",
+        "timestamp": "2026-10-15T09:20:12.123Z",
+        "level": "ERROR",
+        "service": "etihad-booking-service",
+        "traceId": "8b7c6d5e4f3a2b1c",
+        "spanId": "123abc45",
+        "logger": "com.etihad.booking.api.BookingController",
+        "message": "Unhandled exception",
+        "stackTrace": "java.lang.OutOfMemoryError: Java heap space\n\tat java.base/java.util.Arrays.copyOf(Arrays.java:3745)\n\tat java.base/java.util.ArrayList.grow(ArrayList.java:237)"
+      },
+      "suggestedTestIdeas": [
+        "Add regression tests that reproduce the failing workflow from the trace/correlation ID.",
+        "Verify error handling returns a stable 500 response without leaking internals."
+      ]
+    },
+    {
+      "categoryId": "CONFIG_SECRETS",
+      "categoryTitle": "Configuration / secrets / credentials issue",
+      "severity": "high",
+      "matchedRegex": "SMTPAuthenticationError",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:21:05.500Z\",\"level\":\"ERROR\",\"service\":\"etihad-notification-service\",\"traceId\":\"aa11bb22cc33dd44\",\"spanId\":\"deadbeef\",\"logger\":\"com.etihad.notify.NotificationService\",\"message\":\"SMTPAuthenticationError: 535 5.7.8 Username and Password not accepted.\",\"attributes\":{\"flow\":\"BOOKING_CREATE\",\"channel\":\"EMAIL\"}}",
+        "timestamp": "2026-10-15T09:21:05.500Z",
+        "level": "ERROR",
+        "service": "etihad-notification-service",
+        "traceId": "aa11bb22cc33dd44",
+        "spanId": "deadbeef",
+        "logger": "com.etihad.notify.NotificationService",
+        "message": "SMTPAuthenticationError: 535 5.7.8 Username and Password not accepted."
+      },
+      "suggestedTestIdeas": [
+        "Verify non-functional configuration errors are detectable via smoke tests/health endpoints.",
+        "Verify operational runbooks for secret rotation and environment drift."
+      ]
+    },
+    {
+      "categoryId": "GENERIC_5XX",
+      "categoryTitle": "Generic server error (HTTP 5xx)",
+      "severity": "medium",
+      "matchedRegex": "\\b500\\b.*Internal Server Error",
+      "event": {
+        "raw": "{\"timestamp\":\"2026-10-15T09:22:14.777Z\",\"level\":\"ERROR\",\"service\":\"etihad-booking-service\",\"traceId\":\"ccdd0011eeff2233\",\"spanId\":\"00ff11ee\",\"logger\":\"com.etihad.booking.api.BookingController\",\"message\":\"HTTP 500 Internal Server Error - correlationId=CORR-7788\",\"attributes\":{\"flow\":\"BOOKING_CREATE\",\"correlationId\":\"CORR-7788\"}}",
+        "timestamp": "2026-10-15T09:22:14.777Z",
+        "level": "ERROR",
+        "service": "etihad-booking-service",
+        "traceId": "ccdd0011eeff2233",
+        "spanId": "00ff11ee",
+        "logger": "com.etihad.booking.api.BookingController",
+        "message": "HTTP 500 Internal Server Error - correlationId=CORR-7788"
+      },
+      "suggestedTestIdeas": [
+        "Verify consistent error contract for server errors.",
+        "Verify correlation IDs are present and surfaced for support."
+      ]
+    }
+  ],
+  "uncategorizedErrors": []
+}

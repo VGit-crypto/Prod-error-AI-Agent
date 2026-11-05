@@ -1,8 +1,9 @@
 import path from 'node:path';
 
-import { parseDynatraceLogFile } from '../src/dynatrace-log-parser';
-import { loadDynatraceKnowledgeBase } from '../src/dynatrace-kb';
-import { analyzeDynatraceLogEvents } from '../src/dynatrace-log-analyzer';
+import { parseDynatraceLogFile } from '../src/app-log-parser';
+import { parseDynatraceJsonLogFile } from '../src/app-json-log-parser';
+import { loadDynatraceKnowledgeBase } from '../src/error-logs-kb';
+import { analyzeDynatraceLogEvents } from '../src/app-log-analyzer';
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);
@@ -11,10 +12,10 @@ function assert(condition: unknown, message: string): void {
 async function main(): Promise<void> {
   const repoRoot = path.resolve(__dirname, '..', '..', '..');
 
-  const logPath = path.join(repoRoot, 'packages', 'dynatrace', 'logs', 'sample-dynatrace-app.log');
-  const kbPath = path.join(repoRoot, 'packages', 'dynatrace', 'kb', 'dynatrace-failure-categories.json');
+  const logPath = path.join(repoRoot, 'packages', 'dynatrace', 'logs', 'sample-app-logs.json');
+  const kbPath = path.join(repoRoot, 'packages', 'dynatrace', 'kb', 'logs-failure-categories.json');
 
-  const events = parseDynatraceLogFile(logPath);
+  const events = parseDynatraceJsonLogFile(logPath);
   assert(events.length > 1, 'expected to parse more than 5 events');
 
   const kb = loadDynatraceKnowledgeBase(kbPath);

@@ -23,7 +23,6 @@ export interface FailureCategoryRule {
   match: {
     anyRegex: string[];
   };
-  suggestedTestIdeas: string[];
 }
 
 export interface DynatraceFailureKnowledgeBase {
@@ -39,7 +38,8 @@ export interface CategorizedFailure {
   severity: FailureSeverity;
   matchedRegex: string;
   event: DynatraceLogEvent;
-  suggestedTestIdeas: string[];
+  /** One-line bug/story title derived from the error event details. */
+  suggestedBug: string;
 }
 
 export interface DynatraceLogAnalysisReport {
