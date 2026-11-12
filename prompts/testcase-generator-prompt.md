@@ -13,14 +13,9 @@ Coverage requirements (ensure coverage across these where applicable):
 - Positive scenarios
 - Negative scenarios
 - Boundary scenarios
-- Validation scenarios
-- Data integrity scenarios
-- Error handling scenarios
-- Edge cases
-- Regression scenarios
 
 Rules:
-1) Generate 8-15 test cases.
+1) Generate 5 - 6 good quality test cases.
 2) Focus on high-risk, regression-prone scenarios.
 3) Include positive, negative, and boundary cases where relevant.
 4) Steps must be concise and actionable.
