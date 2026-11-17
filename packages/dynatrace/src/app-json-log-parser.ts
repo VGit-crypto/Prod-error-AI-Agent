@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import type { DynatraceLogEvent, DynatraceLogLevel } from './dynatrace-log-types';
+import type { DynatraceLogEvent, DynatraceLogLevel } from './app-log-types';
 
 export interface DynatraceJsonLogEventInput {
   timestamp?: string;
@@ -55,22 +55,38 @@ export function parseDynatraceJsonLogFile(logPath: string): DynatraceLogEvent[] 
 
   const events: DynatraceLogEvent[] = [];
 
+  // Some exported logs are "almost JSON" arrays but contain occasional raw text lines.
+  // If JSON.parse fails, fall back to a tolerant line-based parser.
   const firstNonWs = content.match(/\S/)?.[0];
   if (firstNonWs === '[') {
-    const arr = JSON.parse(content) as DynatraceJsonLogEventInput[];
-    if (!Array.isArray(arr)) throw new Error(`Expected JSON array in ${logPath}`);
-    for (const item of arr) {
-      const rawJson = JSON.stringify(item);
-      events.push(normalizeEvent(item, rawJson));
+    try {
+      const arr = JSON.parse(content) as DynatraceJsonLogEventInput[];
+      if (!Array.isArray(arr)) throw new Error(`Expected JSON array in ${logPath}`);
+      for (const item of arr) {
+        const rawJson = JSON.stringify(item);
+        events.push(normalizeEvent(item, rawJson));
+      }
+      return events;
+    } catch {
+      // tolerant fallback below
     }
-    return events;
   }
 
-  // NDJSON fallback
+  // NDJSON / mixed-content tolerant fallback:
+  // - Accept full JSON objects per line
+  // - Accept lines starting with ",{" as array-fragments and parse the object portion
+  // - Ignore non-JSON lines
   const lines = content.split(/\r?\n/).filter((l) => l.trim());
   for (const line of lines) {
-    const obj = JSON.parse(line) as DynatraceJsonLogEventInput;
-    events.push(normalizeEvent(obj, line));
+    const trimmed = line.trim();
+    const candidate = trimmed.startsWith(',') ? trimmed.slice(1).trim() : trimmed;
+    if (!candidate.startsWith('{') || !candidate.endsWith('}')) continue;
+    try {
+      const obj = JSON.parse(candidate) as DynatraceJsonLogEventInput;
+      events.push(normalizeEvent(obj, candidate));
+    } catch {
+      // ignore invalid JSON lines
+    }
   }
 
   return events;

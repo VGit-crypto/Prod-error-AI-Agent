@@ -10,7 +10,7 @@ dotenv.config();
 
 async function main(): Promise<void> {
   const reader = new DynatraceReportReader();
-  const reportPath = process.env.DYNATRACE_REPORT_PATH ?? 'test-results/dynatrace-report.json';
+  const reportPath = process.env.SkypadLogs_REPORT_PATH ?? 'test-results/SkypadLogs-Error-report.json';
   const report = await reader.read(reportPath);
 
   let stories = [] as Awaited<ReturnType<BugStoryService['generateStories']>>;

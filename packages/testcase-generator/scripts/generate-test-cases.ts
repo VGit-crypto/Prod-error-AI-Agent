@@ -3,7 +3,6 @@ import { AIProvider } from '../../ai/providers/AIProvider';
 import { StructuredResponseService } from '../../ai/services/structured-response.service';
 
 import { PromptLoaderService } from '../src/services/prompt-loader.service';
-import { MarkdownParserService } from '../src/services/markdown-parser.service';
 import { TestCaseGeneratorService } from '../src/services/testcase-generator.service';
 import { ExcelWriterService } from '../src/services/excel-writer.service';
 import { LoggerService } from '../src/services/logger.service';
@@ -17,23 +16,21 @@ async function main(): Promise<void> {
 
   const agent = new TestCaseGenerationAgent(
     new PromptLoaderService(),
-    new MarkdownParserService(),
     new TestCaseGeneratorService(provider, structured),
     new ExcelWriterService(),
     new LoggerService()
   );
 
-  const inputDir = process.env.TC_INPUT_DIR ?? 'test-results/TC-Input';
+  const inputJsonPath = process.env.TC_INPUT_JSON ?? 'test-results/SkypadLogs-Error-report_TC.json';
   const outputDirs = [
     process.env.TC_OUTPUT_DIR_1 ?? 'C:\\Temp',
     process.env.TC_OUTPUT_DIR_2 ?? 'test-results/TC-Output'
   ];
 
   await agent.run({
-    inputDir,
+    inputJsonPath,
     outputDirs,
-    promptTemplatePath: 'prompts/testcase-generator-prompt.md',
-    latestOnly: true
+    promptTemplatePath: 'prompts/testcase-generator-prompt.md'
   });
 }
 

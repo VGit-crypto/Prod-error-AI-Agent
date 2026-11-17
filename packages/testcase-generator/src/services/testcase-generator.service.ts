@@ -1,22 +1,18 @@
 import { z } from 'zod';
 import type { AIProvider, ChatMessage } from '../../../ai/providers/AIProvider';
 import { StructuredResponseService } from '../../../ai/services/structured-response.service';
-import type {
-  BugMarkdownInput,
-  GeneratedTestCasesPayload
-} from '../models/testcase.model';
+import type { GeneratedTestCase, TcReportBugInput } from '../models/testcase.model';
 
-const GeneratedTestCaseSchema = z.object({
-  testCaseId: z.string().min(1),
-  scenario: z.string().min(1),
-  testSteps: z.array(z.string().min(1)).min(1),
-  expectedResult: z.string().min(1),
-  priority: z.enum(['High', 'Medium', 'Low'])
+// Keys and order are defined by prompts/testcase-generator-prompt.md.
+const RawTestCaseSchema = z.object({
+  'Test Case ID': z.string().min(1),
+  Scenario: z.string().min(1),
+  'Test Steps': z.union([z.string(), z.array(z.string())]),
+  'Expected result': z.string().min(1),
+  Priority: z.enum(['High', 'Medium', 'Low'])
 });
 
-const GeneratedTestCasesPayloadSchema = z.object({
-  testCases: z.array(GeneratedTestCaseSchema).min(1)
-});
+const RawTestCasesSchema = z.array(RawTestCaseSchema).min(1);
 
 export class TestCaseGeneratorService {
   constructor(
@@ -24,40 +20,42 @@ export class TestCaseGeneratorService {
     private readonly parser: StructuredResponseService
   ) {}
 
-  buildPrompt(
-    template: string,
-    input: BugMarkdownInput
-  ): string {
-    return template
-      .replace('{{BUG_TITLE}}', input.bugTitle)
-      .replace('{{DESCRIPTION}}', input.description)
-      .replace('{{ACCEPTANCE_CRITERIA}}', input.acceptanceCriteria);
+  /** Only these fields reach the model; correlationId / relatedCorrelationIds are never sent. */
+  toBugInput(entry: Record<string, unknown>): TcReportBugInput {
+    const input: TcReportBugInput = {
+      id: String(entry.id ?? ''),
+      bugTitle: String(entry.Cluster ?? entry.bugTitle ?? '')
+    };
+    for (const k of ['appName', 'service', 'context', 'url', 'message', 'error'] as const) {
+      const v = entry[k];
+      if (typeof v === 'string') input[k] = v;
+    }
+    if (typeof entry.statusCode === 'number') input.statusCode = entry.statusCode;
+    return input;
   }
 
-  normalizeTestCaseIds(bugTitle: string, testCases: GeneratedTestCasesPayload['testCases']): GeneratedTestCasesPayload['testCases'] {
-    const bugId = this.extractBugId(bugTitle) ?? 'BUG';
-    return testCases.map((tc, idx) => {
-      const n = String(idx + 1).padStart(3, '0');
-      return {
-        ...tc,
-        testCaseId: `TC-${bugId}-${n}`
-      };
-    });
+  /** The prompt file is the system prompt; the bug JSON replaces its {{BUG_JSON}} placeholder. */
+  buildSystemPrompt(template: string, bug: TcReportBugInput): string {
+    return template.replace('{{BUG_JSON}}', () => JSON.stringify(bug, null, 2));
   }
 
-  private extractBugId(bugTitle: string): string | null {
-    // bugTitle example: "BUG-EY001 - [FLOW] ..."
-    const m = bugTitle.match(/\b(BUG-[A-Z0-9]+)\b/i);
-    return m?.[1]?.toUpperCase() ?? null;
-  }
-
-  async generateTestCases(prompt: string): Promise<GeneratedTestCasesPayload> {
+  async generateTestCases(systemPrompt: string, bug: TcReportBugInput): Promise<GeneratedTestCase[]> {
     const messages: ChatMessage[] = [
-      { role: 'system', content: 'You generate QA test cases as JSON only.' },
-      { role: 'user', content: prompt }
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `Generate the test cases for bug ${bug.id} now. Return only the JSON array.` }
     ];
-
     const raw = await this.provider.chat(messages);
-    return this.parser.parse(raw, GeneratedTestCasesPayloadSchema);
+    const rows = this.parser.parse(raw, RawTestCasesSchema);
+    const idPart = bug.id.replace(/-/g, '');
+    return rows.map((r, i) => ({
+      // Deterministic ID that always carries the bug id, e.g. TC-EY010-01
+      testCaseId: `TC-${idPart}-${String(i + 1).padStart(2, '0')}`,
+      scenario: r.Scenario,
+      testSteps: Array.isArray(r['Test Steps'])
+        ? r['Test Steps'].map((s, n) => `${n + 1}. ${s}`).join('\n')
+        : r['Test Steps'],
+      expectedResult: r['Expected result'],
+      priority: r.Priority
+    }));
   }
 }

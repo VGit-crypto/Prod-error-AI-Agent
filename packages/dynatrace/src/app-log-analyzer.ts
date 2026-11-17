@@ -3,7 +3,7 @@ import type {
   DynatraceFailureKnowledgeBase,
   DynatraceLogAnalysisReport,
   DynatraceLogEvent,
-} from './dynatrace-log-types';
+} from './app-log-types';
 
 function toFlowTag(input: string): string {
   return input
@@ -130,7 +130,9 @@ export function buildSuggestedBug(
 }
 
 function isErrorLevel(level?: string): boolean {
-  return level === 'ERROR' || level === 'FATAL';
+  if (!level) return false;
+  const v = level.toUpperCase();
+  return v === 'ERROR' || v === 'FATAL';
 }
 
 export function categorizeEvent(

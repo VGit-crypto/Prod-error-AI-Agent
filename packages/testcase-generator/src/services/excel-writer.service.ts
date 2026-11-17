@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { GeneratedTestCase } from '../models/testcase.model';
 
@@ -18,18 +18,8 @@ export class ExcelWriterService {
   private static readonly DARK_BLUE = '1F4E79';
   private static readonly WHITE = 'FFFFFF';
 
-  async writeBugSectionsWorkbook(
-    outputDir: string,
-    fileName: string,
-    blocks: BugSectionExcelBlock[]
-  ): Promise<ExcelWriteResult> {
-    const resolvedDir = path.isAbsolute(outputDir)
-      ? outputDir
-      : path.resolve(process.cwd(), outputDir);
-
-    await mkdir(resolvedDir, { recursive: true });
-    const fullPath = path.join(resolvedDir, fileName);
-
+  /** Builds the workbook once; the same bytes are written to every output folder. */
+  async buildWorkbookBuffer(blocks: BugSectionExcelBlock[]): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'testcase-generator';
     workbook.created = new Date();
@@ -45,7 +35,16 @@ export class ExcelWriterService {
       rowCursor += 1;
     }
 
-    await workbook.xlsx.writeFile(fullPath);
+    return Buffer.from(await workbook.xlsx.writeBuffer());
+  }
+
+  async writeBuffer(outputDir: string, fileName: string, buffer: Buffer): Promise<ExcelWriteResult> {
+    const resolvedDir = path.isAbsolute(outputDir)
+      ? outputDir
+      : path.resolve(process.cwd(), outputDir);
+    await mkdir(resolvedDir, { recursive: true });
+    const fullPath = path.join(resolvedDir, fileName);
+    await writeFile(fullPath, buffer);
     return { fullPath };
   }
 
@@ -70,7 +69,7 @@ export class ExcelWriterService {
 
     // STEP 2: Column headers row
     const headerRowNumber = titleRowNumber + 1;
-    const headerLabels = ['Test Case ID', 'Scenario', 'Test Steps', 'Expected Result', 'Priority'];
+    const headerLabels = ['Test Case ID', 'Scenario', 'Test Steps', 'Expected result', 'Priority'];
 
     for (let c = 1; c <= 5; c += 1) {
       const cell = sheet.getCell(headerRowNumber, c);
@@ -95,17 +94,16 @@ export class ExcelWriterService {
     // Freeze panes: keep the current section header visible if possible.
     // Excel supports a single freeze split, so we freeze at this section's header row.
     // This makes sense since the user will typically scroll within a section.
-    sheet.views = [{ state: 'frozen', xSplit: 0, ySplit: headerRowNumber }];
+    sheet.views = [{ state: 'normal' }];
 
     // STEP 3: Test cases rows
     let rowCursor = headerRowNumber + 1;
     for (const tc of block.testCases) {
       const rowNumber = rowCursor;
-      const steps = tc.testSteps.map((s, i) => `${i + 1}. ${s}`).join('\n');
 
       sheet.getCell(rowNumber, 1).value = tc.testCaseId;
       sheet.getCell(rowNumber, 2).value = tc.scenario;
-      sheet.getCell(rowNumber, 3).value = steps;
+      sheet.getCell(rowNumber, 3).value = tc.testSteps;
       sheet.getCell(rowNumber, 4).value = tc.expectedResult;
       sheet.getCell(rowNumber, 5).value = tc.priority;
 

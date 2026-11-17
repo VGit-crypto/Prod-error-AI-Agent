@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import type {
   DynatraceLogEvent,
   DynatraceLogLevel,
-} from './dynatrace-log-types';
+} from './app-log-types';
 
 // Example supported line:
 // 2026-10-15T09:12:01.012Z ERROR [order-service] [trace_id=... span_id=...] com.foo.Bar - message

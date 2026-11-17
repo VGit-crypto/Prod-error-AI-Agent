@@ -1,46 +1,11 @@
 {
   "name": "dynatrace-failure-categories",
-  "version": "1.0.0",
-  "description": "Rule-based knowledge base for mapping Dynatrace-ingested application log errors to failure categories and suggested UAT test themes. Extended with Etihad airline domain patterns.",
+  "version": "1.1.0",
+  "description": "Rule-based knowledge base for mapping Dynatrace-ingested application log errors to failure categories and suggested UAT test themes. Rules are evaluated top to bottom and the FIRST matching rule wins (matched against message + stack/error text, case-insensitive). Order: Database, Network & Connectivity, Authentication & Authorization, Resource Exhaustion, Data Handling, Validation, Integration. Anything unmatched is Uncategorized (fallback). Extended with Etihad airline domain patterns and Skypad-IFM (AIMS / Amadeus / Datahub / Crew Service) patterns.",
   "categories": [
     {
-      "id": "DOWNSTREAM_TIMEOUT",
-      "title": "Downstream timeout / gateway timeout",
-      "severity": "high",
-      "match": {
-        "anyRegex": [
-          "\\b504\\b.*Gateway Timeout",
-          "\\bRead timed out\\b",
-          "\\btimeout\\b.*downstream",
-          "\\bDownstream timeout\\b"
-        ]
-      }
-    },
-    {
-      "id": "HTTP_4XX_DOWNSTREAM",
-      "title": "Downstream 4xx (not found / bad request)",
-      "severity": "medium",
-      "match": {
-        "anyRegex": [
-          "\\b404\\b.*Not Found",
-          "\\b400\\b.*Bad Request",
-          "\\b422\\b"
-        ]
-      }
-    },
-    {
-      "id": "HTTP_429_RATE_LIMIT",
-      "title": "Rate limiting (HTTP 429)",
-      "severity": "medium",
-      "match": {
-        "anyRegex": [
-          "\\b429\\b.*Too Many Requests",
-          "rate limit"
-        ]
-      }
-    },
-    {
       "id": "DB_SCHEMA_OR_QUERY",
+      "group": "Database",
       "title": "Database schema/query failure",
       "severity": "high",
       "match": {
@@ -49,12 +14,69 @@
           "SQL error",
           "relation\\s+\\\".*\\\"\\s+does not exist",
           "ORA-",
-          "SQLSTATE"
+          "SQLSTATE",
+          "deadlock",
+          "jdbc",
+          "constraint violation",
+          "duplicate key"
+        ]
+      }
+    },
+    {
+      "id": "DB_CONNECTION",
+      "group": "Database",
+      "title": "Database connection / pool failure",
+      "severity": "high",
+      "match": {
+        "anyRegex": [
+          "Connection terminated due to connection timeout",
+          "connection pool",
+          "Connection terminated unexpectedly",
+          "remaining connection slots",
+          "ECONNREFUSED.*5432",
+          "pg-pool"
+        ]
+      }
+    },
+    {
+      "id": "DOWNSTREAM_TIMEOUT",
+      "group": "Network & Connectivity",
+      "title": "Downstream timeout / gateway timeout",
+      "severity": "high",
+      "match": {
+        "anyRegex": [
+          "\\b504\\b.*Gateway Timeout",
+          "\\bRead timed out\\b",
+          "\\btimeout\\b.*downstream",
+          "\\bDownstream timeout\\b",
+          "ETIMEDOUT",
+          "ESOCKETTIMEDOUT",
+          "timeout of \\d+ms exceeded",
+          "timed out"
+        ]
+      }
+    },
+    {
+      "id": "NETWORK_CONNECTIVITY",
+      "group": "Network & Connectivity",
+      "title": "Network / connection refused / reset / unreachable",
+      "severity": "high",
+      "match": {
+        "anyRegex": [
+          "ECONNREFUSED",
+          "ECONNRESET",
+          "ENOTFOUND",
+          "EHOSTUNREACH",
+          "socket hang up",
+          "connection refused",
+          "connection reset",
+          "unreachable"
         ]
       }
     },
     {
       "id": "AUTHN_AUTHZ",
+      "group": "Authentication & Authorization",
       "title": "Authentication/authorization failure",
       "severity": "high",
       "match": {
@@ -64,28 +86,18 @@
           "Unauthorized",
           "Forbidden",
           "AccessDenied",
-          "invalid token"
-        ]
-      }
-    },
-    {
-      "id": "INPUT_VALIDATION",
-      "title": "Input validation / business rule violation",
-      "severity": "low",
-      "match": {
-        "anyRegex": [
-          "Validation error",
-          "\\bpassportNumber\\b",
-          "\\bPNR\\b",
-          "\\bitinerary\\b",
-          "must be a future date",
-          "ConstraintViolation",
-          "MethodArgumentNotValidException"
+          "invalid token",
+          "Invalid credentials",
+          "Authentication Failed",
+          "\\b401\\b",
+          "\\b403\\b",
+          "token expired"
         ]
       }
     },
     {
       "id": "TLS_CERT",
+      "group": "Authentication & Authorization",
       "title": "TLS/Certificate/Handshake failure",
       "severity": "high",
       "match": {
@@ -98,7 +110,70 @@
       }
     },
     {
+      "id": "CONFIG_SECRETS",
+      "group": "Authentication & Authorization",
+      "title": "Configuration / secrets / credentials issue",
+      "severity": "high",
+      "match": {
+        "anyRegex": [
+          "SMTPAuthenticationError",
+          "Username and Password not accepted",
+          "secret",
+          "configuration"
+        ]
+      }
+    },
+    {
+      "id": "RESOURCE_EXHAUSTION",
+      "group": "Resource Exhaustion",
+      "title": "Resource exhaustion (OOM / thread starvation)",
+      "severity": "critical",
+      "match": {
+        "anyRegex": [
+          "OutOfMemoryError",
+          "Java heap space",
+          "JavaScript heap out of memory",
+          "GC overhead limit exceeded",
+          "thread starvation",
+          "ENOSPC",
+          "no space left",
+          "too many open files",
+          "EMFILE"
+        ]
+      }
+    },
+    {
+      "id": "HTTP_429_RATE_LIMIT",
+      "group": "Resource Exhaustion",
+      "title": "Rate limiting (HTTP 429)",
+      "severity": "medium",
+      "match": {
+        "anyRegex": [
+          "\\b429\\b.*Too Many Requests",
+          "status code 429",
+          "rate limit"
+        ]
+      }
+    },
+    {
+      "id": "DATA_NOT_FOUND",
+      "group": "Data Handling",
+      "title": "Required data not found / missing (guests, aircraft, seat map data)",
+      "severity": "medium",
+      "match": {
+        "anyRegex": [
+          "No guests found",
+          "Required data missing",
+          "compartments, aircraft rows, or seat arrangements",
+          "Aircraft info is not available",
+          "No (crew|flight|seat|aircraft) .* found",
+          "NotFoundException"
+        ]
+      }
+    },
+    {
       "id": "NULL_POINTER_OR_BUG",
+      "group": "Data Handling",
       "title": "Unhandled exception / application bug",
       "severity": "high",
       "match": {
@@ -106,46 +181,112 @@
           "NullPointerException",
           "Unhandled exception",
           "TypeError",
-          "ReferenceError"
+          "ReferenceError",
+          "Cannot read propert(y|ies) of (undefined|null)",
+          "is not a function",
+          "index out of"
         ]
       }
     },
     {
-      "id": "RESOURCE_EXHAUSTION",
-      "title": "Resource exhaustion (OOM / thread starvation)",
-      "severity": "critical",
+      "id": "INVALID_FLIGHT_DETAILS",
+      "group": "Validation",
+      "title": "Invalid flight details rejected by seat map provider (Amadeus)",
+      "severity": "medium",
       "match": {
         "anyRegex": [
-          "OutOfMemoryError",
-          "Java heap space",
-          "GC overhead limit exceeded",
-          "thread starvation"
+          "Invalid flight details",
+          "Error updating seat map for flight .*ErrorCode",
+          "getSeatMapDetails FAILED.*ErrorCode"
         ]
       }
     },
     {
-      "id": "CONFIG_SECRETS",
-      "title": "Configuration / secrets / credentials issue",
+      "id": "BUSINESS_RULE_CONFLICT",
+      "group": "Validation",
+      "title": "Business rule conflict (duplicate / already exists)",
+      "severity": "low",
+      "match": {
+        "anyRegex": [
+          "ConflictException",
+          "already exists",
+          "cannot be added manually"
+        ]
+      }
+    },
+    {
+      "id": "INPUT_VALIDATION",
+      "group": "Validation",
+      "title": "Input validation / business rule violation",
+      "severity": "low",
+      "match": {
+        "anyRegex": [
+          "Validation error",
+          "\\bpassportNumber\\b",
+          "\\bPNR\\b",
+          "\\bitinerary\\b",
+          "must be a future date",
+          "ConstraintViolation",
+          "MethodArgumentNotValidException",
+          "BadRequestException",
+          "malformed",
+          "IllegalArgumentException"
+        ]
+      }
+    },
+    {
+      "id": "UPSTREAM_AIMS_SOAP_FAULT",
+      "group": "Integration",
+      "title": "AIMS SOAP service fault (crew roster provider)",
       "severity": "high",
       "match": {
         "anyRegex": [
-          "SMTPAuthenticationError",
-          "Username and Password not accepted",
-          "Invalid credentials",
-          "secret",
-          "configuration"
+          "AIMS SOAP Fault",
+          "AIMS API Error",
+          "AIMS call FAILED",
+          "underlying provider failed on Open",
+          "InternalServiceFault"
+        ]
+      }
+    },
+    {
+      "id": "UPSTREAM_AMADEUS_ERROR",
+      "group": "Integration",
+      "title": "Amadeus web service call failure",
+      "severity": "high",
+      "match": {
+        "anyRegex": [
+          "Amadeus Web Service",
+          "Amadeus"
+        ]
+      }
+    },
+    {
+      "id": "HTTP_4XX_DOWNSTREAM",
+      "group": "Integration",
+      "title": "Downstream 4xx (not found / bad request)",
+      "severity": "medium",
+      "match": {
+        "anyRegex": [
+          "\\b404\\b.*Not Found",
+          "\\b400\\b.*Bad Request",
+          "\\b422\\b",
+          "status code 4\\d\\d"
         ]
       }
     },
     {
       "id": "GENERIC_5XX",
+      "group": "Integration",
       "title": "Generic server error (HTTP 5xx)",
       "severity": "medium",
       "match": {
         "anyRegex": [
           "\\b500\\b.*Internal Server Error",
           "\\b502\\b",
-          "\\b503\\b"
+          "\\b503\\b",
+          "status code 5\\d\\d",
+          "InternalServerErrorException"
         ]
       }
     }

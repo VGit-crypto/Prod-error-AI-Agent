@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import type { DynatraceFailureKnowledgeBase } from './dynatrace-log-types';
+import type { DynatraceFailureKnowledgeBase } from './app-log-types';
 
 export function loadDynatraceKnowledgeBase(kbPath: string): DynatraceFailureKnowledgeBase {
   const raw = fs.readFileSync(kbPath, 'utf-8');
