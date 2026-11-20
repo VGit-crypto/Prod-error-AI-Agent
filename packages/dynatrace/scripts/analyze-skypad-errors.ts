@@ -46,9 +46,42 @@ ${JSON.stringify(payload, null, 2)}`;
     { role: 'user', content: userPrompt },
   ]);
 
-  // Enforce prompt constraints defensively.
-  const title = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)[0] ?? '';
-  return title.length > 120 ? title.slice(0, 117).trimEnd() + '...' : title;
+  let title = firstLine(raw);
+
+  // If the model went over the limit, ask it to shorten (rather than chopping the text with "...").
+  for (let attempt = 0; attempt < 2 && title.length > MAX_TITLE_LENGTH; attempt++) {
+    const retry = await ai.chat([
+      { role: 'system', content: promptTemplate },
+      { role: 'user', content: userPrompt },
+      { role: 'assistant', content: title },
+      {
+        role: 'user',
+        content:
+          `That title is ${title.length} characters. Rewrite it as ONE complete line of at most ` +
+          `${MAX_TITLE_LENGTH - 10} characters by removing the least important detail. Do not truncate or use "...".`,
+      },
+    ]);
+    title = firstLine(retry) || title;
+  }
+
+  return finalizeTitle(title);
+}
+
+const MAX_TITLE_LENGTH = 120;
+
+function firstLine(raw: string): string {
+  return (raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)[0] ?? '').replace(/^["'`]+|["'`]+$/g, '');
+}
+
+// Last-resort clean-up: never emit "..." and never cut mid-word.
+function finalizeTitle(title: string): string {
+  let t = title.replace(/\s*(\.{3}|…)\s*$/, '').trim();
+  if (t.length > MAX_TITLE_LENGTH) {
+    t = t.slice(0, MAX_TITLE_LENGTH);
+    const lastSpace = t.lastIndexOf(' ');
+    if (lastSpace > 40) t = t.slice(0, lastSpace);
+  }
+  return t.replace(/[\s,;:.\-]+$/, '').trim();
 }
 
 function fallbackBugTitle(summary: SkypadErrorSummary): string {
@@ -57,8 +90,7 @@ function fallbackBugTitle(summary: SkypadErrorSummary): string {
   const msg = (summary.message ?? '').trim() || 'unknown error';
 
   // Very conservative fallback: do not attempt to infer/guess.
-  const base = `[${app}] ${url} fails when ${msg}`.replace(/\s+/g, ' ').trim();
-  return base.length > 120 ? base.slice(0, 117).trimEnd() + '...' : base;
+  return finalizeTitle(`[${app}] ${url} fails when ${msg}`.replace(/\s+/g, ' ').trim());
 }
 
 function readArg(name: string, fallback?: string): string | undefined {
